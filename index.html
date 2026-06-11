@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>读码器选型数据库</title>
-    <!-- 引入 Remix Icon 图标库 -->
+    <title>读码选型数据库</title>
+    <!-- Remix Icon 图标库 -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         * {
@@ -12,7 +12,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        /* 全局禁止滚动条，隐藏滚动条但保留滚动功能 */
+        /* 全局无滚动条，但内部滚动 */
         body, html {
             height: 100%;
             width: 100%;
@@ -20,7 +20,6 @@
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
             background: #f1f5f9;
         }
-        /* 主应用容器：填满全屏，flex列布局 */
         .app-container {
             height: 100vh;
             width: 100vw;
@@ -31,7 +30,6 @@
             overflow: hidden;
             background: #f1f5f9;
         }
-        /* 工具栏 */
         .toolbar {
             background: #ffffff;
             border-radius: 28px;
@@ -71,7 +69,6 @@
             align-items: center;
             gap: 6px;
         }
-        /* 筛选栏 */
         .filter-area {
             background: white;
             border-radius: 28px;
@@ -156,7 +153,7 @@
         .btn-success:hover { background: #0e542e; transform: translateY(-1px); }
         .btn-outline:hover { background: #f8fafc; transform: translateY(-1px); }
         
-        /* 表格容器：无滚动条但可滚动（隐藏滚动条） */
+        /* 表格容器: 无滚动条但可滚动 */
         .table-wrapper {
             background: white;
             border-radius: 28px;
@@ -165,7 +162,7 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: auto;
-            scrollbar-width: none;  /* Firefox隐藏滚动条 */
+            scrollbar-width: none;
             -ms-overflow-style: none;
         }
         .table-wrapper::-webkit-scrollbar {
@@ -177,7 +174,6 @@
             font-size: 0.8rem;
             min-width: 1100px;
         }
-        /* 表头居中对齐 + 加一点视觉优化 */
         .product-table th {
             background: #fafcff;
             padding: 14px 12px;
@@ -188,17 +184,15 @@
             top: 0;
             background-color: #ffffff;
             z-index: 2;
-            text-align: center;   /* 表头文字水平居中 */
+            text-align: center;
             vertical-align: middle;
         }
-        /* 表格单元格全部水平居中对齐 + 垂直居中 */
         .product-table td {
             padding: 12px 12px;
             border-bottom: 1px solid #f0f3f9;
             text-align: center;
             vertical-align: middle;
         }
-        /* 第一列型号特殊保持一点舒适感，但也是居中（可选）为了对齐统一也居中 */
         .model-code {
             font-family: 'SF Mono', 'Fira Code', monospace;
             font-weight: 600;
@@ -209,7 +203,6 @@
             display: inline-block;
             font-size: 0.75rem;
         }
-        /* 操作按钮组保持居中对齐，内部flex居中 */
         .action-cell {
             display: flex;
             gap: 8px;
@@ -244,7 +237,7 @@
         }
         .action-btn.del-btn:hover { background: #fee2e2; transform: scale(1.02); }
         
-        /* 模态框 */
+        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -340,10 +333,9 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- 顶部工具栏 -->
     <div class="toolbar">
         <div class="branding">
-            <h1><i class="ri-camera-lens-line"></i> 读码选型 · ID系列</h1>
+            <h1><i class="ri-camera-lens-line"></i> 选型数据库 · ID系列</h1>
             <div class="stats-badge">
                 <i class="ri-database-2-line"></i>
                 <span id="statsCount">0</span> 个型号
@@ -353,35 +345,21 @@
             <button id="addBtn" class="btn btn-primary"><i class="ri-add-line"></i> 新增</button>
             <button id="importCodeBtn" class="btn btn-outline"><i class="ri-code-box-line"></i> 导入JS</button>
             <button id="exportBtn" class="btn btn-success"><i class="ri-download-2-line"></i> 导出</button>
-            <button id="resetBtn" class="btn btn-outline"><i class="ri-refresh-line"></i> 重置</button>
+            <button id="resetBtn" class="btn btn-outline"><i class="ri-refresh-line"></i> 重置出厂</button>
         </div>
     </div>
-    <!-- 筛选栏 -->
     <div class="filter-area">
         <div class="filter-label"><i class="ri-search-line"></i> 型号筛选</div>
         <input type="text" id="filterModelInput" class="filter-input" placeholder="输入型号 / 系列关键字..." autocomplete="off">
         <button id="clearFilterBtn" class="clear-filter"><i class="ri-close-circle-line"></i> 清除筛选</button>
-        <div style="font-size:0.7rem; color:#5b6e8c;"><i class="ri-information-line"></i> 支持型号、系列模糊匹配</div>
+        <div style="font-size:0.7rem; color:#5b6e8c;"><i class="ri-information-line"></i> 支持型号、系列模糊匹配 (数据自动保存)</div>
     </div>
-    <!-- 表格区域：无滚动条但内部滚动，所有内容居中对齐 -->
     <div class="table-wrapper">
         <table class="product-table">
             <thead>
-                <tr>
-                    <th>型号(Model)</th>
-                    <th>系列</th>
-                    <th>分辨率(W×H)</th>
-                    <th>像元(μm)</th>
-                    <th>焦距(mm)</th>
-                    <th>接口协议</th>
-                    <th>防护等级</th>
-                    <th>工作距离(mm)</th>
-                    <th>操作</th>
-                </tr>
+                <tr><th>型号(Model)</th><th>系列</th><th>分辨率(W×H)</th><th>像元(μm)</th><th>焦距(mm)</th><th>接口协议</th><th>防护等级</th><th>工作距离(mm)</th><th>操作</th></tr>
             </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="9" style="text-align:center; padding: 40px;">✨ 加载数据中... </td></tr>
-            </tbody>
+            <tbody id="tableBody"><tr><td colspan="9" style="text-align:center; padding:40px;">✨ 加载数据中...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -389,10 +367,7 @@
 <!-- 模态框: 新增/编辑 -->
 <div id="productModal" class="modal">
     <div class="modal-card">
-        <div class="modal-header">
-            <span id="modalTitle"><i class="ri-edit-box-line"></i> 产品型号</span>
-            <button class="close-icon" id="closeModalBtn">&times;</button>
-        </div>
+        <div class="modal-header"><span id="modalTitle"><i class="ri-edit-box-line"></i> 产品型号</span><button class="close-icon" id="closeModalBtn">&times;</button></div>
         <form id="productForm">
             <div class="form-grid">
                 <label>型号 *</label><input type="text" id="model" required placeholder="例: ID803M-03M">
@@ -405,53 +380,36 @@
                 <label>最小工作距</label><input type="number" id="minDist">
                 <label>最大工作距</label><input type="number" id="maxDist">
             </div>
-            <div class="modal-footer">
-                <button type="button" id="cancelModalBtn" class="btn btn-outline">取消</button>
-                <button type="submit" class="btn btn-primary"><i class="ri-save-line"></i> 保存</button>
-            </div>
+            <div class="modal-footer"><button type="button" id="cancelModalBtn" class="btn btn-outline">取消</button><button type="submit" class="btn btn-primary"><i class="ri-save-line"></i> 保存</button></div>
         </form>
     </div>
 </div>
 
-<!-- 导入JS代码模态框 -->
+<!-- 导入JS模态框 -->
 <div id="importModal" class="modal">
     <div class="modal-card">
-        <div class="modal-header">
-            <span><i class="ri-file-code-line"></i> 导入 PRODUCT_DB 代码</span>
-            <button class="close-icon" id="closeImportBtn">&times;</button>
-        </div>
-        <div style="background:#f8fafc; border-radius:20px; padding:8px 12px; font-size:0.7rem; margin-bottom:12px;">
-            <i class="ri-information-line"></i> 支持 const PRODUCT_DB = [...] 或直接粘贴数组
-        </div>
+        <div class="modal-header"><span><i class="ri-file-code-line"></i> 导入 PRODUCT_DB 代码</span><button class="close-icon" id="closeImportBtn">&times;</button></div>
+        <div style="background:#f8fafc; border-radius:20px; padding:8px 12px; font-size:0.7rem; margin-bottom:12px;"><i class="ri-information-line"></i> 支持 const PRODUCT_DB = [...] 或直接粘贴数组。导入后自动保存至本地，刷新页面不丢失。</div>
         <textarea id="importCodeArea" rows="8" placeholder='const PRODUCT_DB = [ { model: "ID803M-03M", series: "ID800", resolution: { w: 640, h: 480 }, pixelSize: 3.7, focal: 3.1, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 120, max: 120 } } ];' style="width:100%; font-family: monospace; border-radius: 20px;"></textarea>
-        <div class="modal-footer" style="margin-top:18px;">
-            <button id="cancelImportBtn" class="btn btn-outline">取消</button>
-            <button id="confirmImportBtn" class="btn btn-primary"><i class="ri-upload-2-line"></i> 解析导入</button>
-        </div>
+        <div class="modal-footer" style="margin-top:18px;"><button id="cancelImportBtn" class="btn btn-outline">取消</button><button id="confirmImportBtn" class="btn btn-primary"><i class="ri-upload-2-line"></i> 解析并导入</button></div>
     </div>
 </div>
 
 <!-- 导出预览模态框 -->
 <div id="exportModal" class="modal">
     <div class="modal-card">
-        <div class="modal-header">
-            <span><i class="ri-download-2-line"></i> 导出 JS 代码</span>
-            <button class="close-icon" id="closeExportBtn">&times;</button>
-        </div>
+        <div class="modal-header"><span><i class="ri-download-2-line"></i> 导出 JS 代码</span><button class="close-icon" id="closeExportBtn">&times;</button></div>
         <div class="code-preview" id="exportCodeBlock"></div>
-        <div class="modal-footer" style="margin-top:16px;">
-            <button id="copyCodeBtn" class="btn btn-success"><i class="ri-clipboard-line"></i> 复制</button>
-            <button id="downloadCodeBtn" class="btn btn-primary"><i class="ri-file-download-line"></i> 下载 .js</button>
-        </div>
+        <div class="modal-footer" style="margin-top:16px;"><button id="copyCodeBtn" class="btn btn-success"><i class="ri-clipboard-line"></i> 复制</button><button id="downloadCodeBtn" class="btn btn-primary"><i class="ri-file-download-line"></i> 下载 .js</button></div>
     </div>
 </div>
 <div id="toastMsg" class="toast-msg">✔️ 提示</div>
 
 <script>
-    // ---------- 全量产品数据库 ----------
-    let fullProductDB = [];
-
-    // ---------- 示例数据（丰富且具有代表性）----------
+    // ---------- 数据持久化 KEY ----------
+    const STORAGE_KEY = "industrial_camera_product_db";
+    
+    // 出厂默认示例数据（同时作为fallback）
     const DEFAULT_SAMPLE = [
         { model: "ID803M-03M", series: "ID800", resolution: { w: 640, h: 480 }, pixelSize: 3.7, focal: 3.1, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 120, max: 120 } },
         { model: "ID813M-05M", series: "ID800", resolution: { w: 1280, h: 1024 }, pixelSize: 2.7, focal: 4.9, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 70, max: 120 } },
@@ -464,9 +422,50 @@
         { model: "ID3060RM-12M", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } }
     ];
 
+    // 全局数据 & 筛选
+    let fullProductDB = [];
     let currentFilter = "";
 
-    // 渲染表格 (完美居中对齐)
+    // ---------- 持久化操作 ----------
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fullProductDB));
+        } catch(e) { console.warn("存储失败", e); }
+    }
+
+    function loadFromLocalStorage() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    fullProductDB = parsed;
+                    return true;
+                } else {
+                    fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
+                    saveToLocalStorage();
+                    return false;
+                }
+            } catch(e) {
+                fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
+                saveToLocalStorage();
+                return false;
+            }
+        } else {
+            fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
+            saveToLocalStorage();
+            return false;
+        }
+        return true;
+    }
+
+    // 统一变更函数：任何对 fullProductDB 的修改后调用此方法，持久化+刷新视图
+    function commitDataChange() {
+        saveToLocalStorage();
+        renderTable();
+    }
+
+    // 渲染表格（居中对齐）
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         const statsSpan = document.getElementById('statsCount');
@@ -493,7 +492,7 @@
                 <td>${res.w} × ${res.h}</td>
                 <td>${item.pixelSize ?? '-'}</td>
                 <td>${item.focal ?? '-'}</td>
-                <td style="max-width:180px;">${escapeHtml(item.interface || '-')}</td>
+                <td>${escapeHtml(item.interface || '-')}</td>
                 <td>${escapeHtml(item.protection || '-')}</td>
                 <td>${wd.min} ~ ${wd.max}</td>
                 <td class="action-cell">
@@ -505,7 +504,7 @@
         tbody.innerHTML = html;
         statsSpan.innerText = fullProductDB.length;
 
-        // 绑定编辑删除 (基于model唯一性)
+        // 绑定编辑删除
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const model = btn.getAttribute('data-model');
@@ -519,7 +518,7 @@
                 if(confirm(`确认删除 "${model}" 吗？`)) {
                     const idx = fullProductDB.findIndex(p => p.model === model);
                     if(idx !== -1) fullProductDB.splice(idx, 1);
-                    renderTable();
+                    commitDataChange();  // 持久化并刷新
                     showToast(`已删除 ${model}`);
                 }
             });
@@ -546,6 +545,7 @@
         document.getElementById('productModal').style.display = 'flex';
     }
     function closeModal() { document.getElementById('productModal').style.display = 'none'; editTargetModel = null; }
+    
     function saveProductFromForm() {
         const model = document.getElementById('model').value.trim();
         if(!model) { showToast('型号不能为空'); return false; }
@@ -568,12 +568,12 @@
             fullProductDB.push(newProd);
             showToast('添加成功');
         }
-        renderTable();
+        commitDataChange(); // 持久化+刷新
         closeModal();
         return true;
     }
 
-    // 导入JS解析
+    // 导入解析 + 持久化
     function importFromCode(jsCode) {
         try {
             let match = jsCode.match(/PRODUCT_DB\s*=\s*(\[[\s\S]*?\]);/);
@@ -595,8 +595,8 @@
             }));
             if(validated.length === 0) throw new Error('无有效数据');
             fullProductDB = validated;
-            renderTable();
-            showToast(`导入成功，共 ${fullProductDB.length} 个型号`);
+            commitDataChange();  // 关键: 保存至localStorage并刷新表格
+            showToast(`导入成功，共 ${fullProductDB.length} 个型号 (数据已自动保存)`);
             document.getElementById('importModal').style.display = 'none';
             document.getElementById('importCodeArea').value = '';
         } catch(e) { showToast(`导入失败: ${e.message}`); }
@@ -604,11 +604,18 @@
 
     function exportToJS() { const code = `const PRODUCT_DB = ${JSON.stringify(fullProductDB, null, 2)};`; document.getElementById('exportCodeBlock').innerText = code; document.getElementById('exportModal').style.display = 'flex'; }
     function copyExported() { navigator.clipboard.writeText(document.getElementById('exportCodeBlock').innerText).then(()=>showToast('已复制')).catch(()=>showToast('复制失败')); }
-    function downloadJS() { const blob = new Blob([`// 工业相机数据库\nconst PRODUCT_DB = ${JSON.stringify(fullProductDB, null, 2)};\nexport default PRODUCT_DB;`], {type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`product_db_${Date.now()}.js`; a.click(); URL.revokeObjectURL(a.href); showToast('下载成功'); }
+    function downloadJS() { const blob = new Blob([`// 工业相机数据库 (持久化数据)\nconst PRODUCT_DB = ${JSON.stringify(fullProductDB, null, 2)};\nexport default PRODUCT_DB;`], {type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`product_db_${Date.now()}.js`; a.click(); URL.revokeObjectURL(a.href); showToast('下载成功'); }
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.opacity='1'; setTimeout(()=>t.style.opacity='0', 2000); }
-    function resetToSample() { fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE)); currentFilter = ""; document.getElementById('filterModelInput').value = ""; renderTable(); showToast(`已重置示例数据 (${fullProductDB.length} 个型号)`); }
     
-    // 筛选
+    // 重置出厂数据 (同时覆盖存储)
+    function resetToFactory() {
+        fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
+        commitDataChange();
+        currentFilter = "";
+        document.getElementById('filterModelInput').value = "";
+        showToast(`已重置为出厂示例数据 (${fullProductDB.length} 个型号)`);
+    }
+    
     function applyFilter() { currentFilter = document.getElementById('filterModelInput').value; renderTable(); }
     function clearFilter() { document.getElementById('filterModelInput').value = ""; currentFilter = ""; renderTable(); showToast("已清除筛选"); }
 
@@ -616,7 +623,7 @@
     document.getElementById('addBtn').addEventListener('click', openAddModal);
     document.getElementById('importCodeBtn').addEventListener('click', ()=>document.getElementById('importModal').style.display='flex');
     document.getElementById('exportBtn').addEventListener('click', exportToJS);
-    document.getElementById('resetBtn').addEventListener('click', resetToSample);
+    document.getElementById('resetBtn').addEventListener('click', resetToFactory);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
     document.getElementById('closeImportBtn').addEventListener('click', ()=>document.getElementById('importModal').style.display='none');
@@ -630,7 +637,9 @@
     document.getElementById('productForm').addEventListener('submit', (e)=>{ e.preventDefault(); saveProductFromForm(); });
     window.addEventListener('click', (e)=>{ if(e.target.classList.contains('modal')) e.target.style.display='none'; });
     
-    resetToSample();
+    // 启动时加载本地存储数据
+    loadFromLocalStorage();
+    renderTable();
 </script>
 </body>
 </html>

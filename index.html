@@ -1,768 +1,443 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>读码选型数据库</title>
-    <!-- Remix Icon 图标库 -->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        /* 全局无滚动条，但内部滚动 */
-        body, html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
-            background: #f1f5f9;
-        }
-        .app-container {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 24px 20px 24px;
-            gap: 18px;
-            overflow: hidden;
-            background: #f1f5f9;
-        }
-        .toolbar {
-            background: #ffffff;
-            border-radius: 28px;
-            padding: 14px 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #eef2f8;
-            flex-shrink: 0;
-        }
-        .branding {
-            display: flex;
-            align-items: baseline;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-        .branding h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #1e2b3c, #2c4b6e);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-        }
-        .stats-badge {
-            background: #eef2ff;
-            padding: 5px 16px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #1e40af;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .filter-area {
-            background: white;
-            border-radius: 28px;
-            padding: 8px 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            border: 1px solid #eef2f8;
-            flex-shrink: 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-        .filter-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1e293b;
-        }
-        .filter-input {
-            border: 1px solid #cbd5e1;
-            border-radius: 40px;
-            padding: 8px 16px;
-            width: 260px;
-            font-size: 0.8rem;
-            outline: none;
-            transition: 0.2s;
-            background: #fefefe;
-        }
-        .filter-input:focus {
-            border-color: #2c4b6e;
-            box-shadow: 0 0 0 2px rgba(44,75,110,0.1);
-        }
-        .clear-filter {
-            background: #f1f5f9;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 14px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s;
-        }
-        .clear-filter:hover {
-            background: #e2e8f0;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 7px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-        }
-        .btn-primary {
-            background: #1f3a5f;
-            border-color: #1f3a5f;
-            color: white;
-        }
-        .btn-primary:hover { background: #0f2a48; transform: translateY(-1px); }
-        .btn-success {
-            background: #146b3a;
-            border-color: #146b3a;
-            color: white;
-        }
-        .btn-success:hover { background: #0e542e; transform: translateY(-1px); }
-        .btn-outline:hover { background: #f8fafc; transform: translateY(-1px); }
-        
-        /* 表格容器: 无滚动条但可滚动 */
-        .table-wrapper {
-            background: white;
-            border-radius: 28px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
-            border: 1px solid #eef2f8;
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .table-wrapper::-webkit-scrollbar {
-            display: none;
-        }
-        .product-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            min-width: 1100px;
-        }
-        .product-table th {
-            background: #fafcff;
-            padding: 14px 12px;
-            font-weight: 700;
-            color: #1e2f41;
-            border-bottom: 1.5px solid #e4e9f0;
-            position: sticky;
-            top: 0;
-            background-color: #ffffff;
-            z-index: 2;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .product-table td {
-            padding: 12px 12px;
-            border-bottom: 1px solid #f0f3f9;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .model-code {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-weight: 600;
-            color: #0c4a6e;
-            background: #eef2ff;
-            padding: 4px 10px;
-            border-radius: 30px;
-            display: inline-block;
-            font-size: 0.75rem;
-        }
-        .action-cell {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            justify-content: center;
-        }
-        .action-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 32px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s;
-            background: #f1f5f9;
-            color: #1f3a5f;
-        }
-        .action-btn i { font-size: 0.85rem; }
-        .action-btn.edit-btn {
-            background: #ecfdf5;
-            color: #0b5e42;
-            border: 1px solid #c6f0da;
-        }
-        .action-btn.edit-btn:hover { background: #d1fae5; transform: scale(1.02); }
-        .action-btn.del-btn {
-            background: #fff1f0;
-            color: #b91c1c;
-            border: 1px solid #ffdad8;
-        }
-        .action-btn.del-btn:hover { background: #fee2e2; transform: scale(1.02); }
-        
-        /* 模态框样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-card {
-            background: white;
-            width: 90%;
-            max-width: 680px;
-            border-radius: 40px;
-            padding: 24px 32px;
-            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.3);
-            max-height: 85vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 18px;
-            border-bottom: 2px solid #eef2ff;
-            padding-bottom: 12px;
-        }
-        .close-icon {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #6c7a91;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 14px 12px;
-            margin-bottom: 24px;
-        }
-        .form-grid label {
-            font-weight: 600;
-            align-self: center;
-            font-size: 0.8rem;
-        }
-        input, textarea {
-            padding: 9px 14px;
-            border: 1px solid #cfdee9;
-            border-radius: 24px;
-            font-size: 0.8rem;
-            width: 100%;
-        }
-        .resolution-flex { display: flex; gap: 8px; align-items: center; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; }
-        .code-preview {
-            background: #0f172a;
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 24px;
-            font-family: monospace;
-            font-size: 0.7rem;
-            overflow-x: auto;
-            max-height: 280px;
-        }
-        .toast-msg {
-            position: fixed;
-            bottom: 22px;
-            right: 22px;
-            background: #0f172ae6;
-            backdrop-filter: blur(8px);
-            color: white;
-            padding: 8px 22px;
-            border-radius: 60px;
-            font-size: 0.75rem;
-            z-index: 1200;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-        }
-        @media (max-width: 680px) {
-            .app-container { padding: 12px; }
-            .action-btn span { display: none; }
-            .action-btn { padding: 5px 8px; }
-            .filter-input { width: 180px; }
-            .product-table td, .product-table th { padding: 8px 6px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title data-i18n="title">海康机器人 · 读码器选型工具</title>
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="preload" href="js/data/product_db.js" as="script">
+  <link rel="preload" href="js/data/peidan.js" as="script">
 </head>
 <body>
-<div class="app-container">
-    <div class="toolbar">
-        <div class="branding">
-            <h1><i class="ri-camera-lens-line"></i> 选型数据库 · ID系列</h1>
-            <div class="stats-badge">
-                <i class="ri-database-2-line"></i>
-                <span id="statsCount">0</span> 个型号
+<div class="app-window">
+
+  <!-- TITLEBAR -->
+  <div class="titlebar">
+    <div class="logo-area">
+      <h1>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <rect x="2" y="2" width="9" height="9" rx="1" fill="#f76504"/>
+          <rect x="13" y="2" width="9" height="9" rx="1" fill="rgba(255,255,255,0.25)"/>
+          <rect x="2" y="13" width="9" height="9" rx="1" fill="rgba(255,255,255,0.25)"/>
+          <rect x="13" y="13" width="9" height="9" rx="1" fill="rgba(255,255,255,0.15)"/>
+        </svg>
+        HIKROBOT · 读码器选型工具
+        <span class="badge">V3.0</span>
+      </h1>
+    </div>
+    <div class="titlebar-actions">
+      <button class="titlebar-btn" id="langBtnMobile" onclick="toggleLang()" data-i18n="langBtn">EN</button>
+      <button class="titlebar-btn" id="themeBtnMobile" onclick="toggleTheme()">🌙</button>
+    </div>
+    <div class="status-badge" data-i18n="status">计算结果仅供参考，建议实测验证</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- NAV SIDEBAR -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" data-page="page-selection" role="tab">
+        <span class="nav-tab-icon">⚡</span><span data-i18n="tab1">智能选型</span>
+      </button>
+      <button class="nav-tab" data-page="page-competitor" role="tab">
+        <span class="nav-tab-icon">🔬</span><span data-i18n="tab2">竞品对标</span>
+      </button>
+      <button class="nav-tab" data-page="page-bom" role="tab">
+        <span class="nav-tab-icon">📋</span><span data-i18n="tab3">配单表</span>
+      </button>
+      <button class="nav-tab" data-page="page-mapping" role="tab">
+        <span class="nav-tab-icon">🔄</span><span data-i18n="tab4">对照表</span>
+      </button>
+      <div class="nav-footer">
+        <button class="nav-footer-btn" id="langBtn" onclick="toggleLang()" data-i18n="langBtn">EN</button>
+        <button class="nav-footer-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+      </div>
+    </nav>
+
+    <!-- PAGE: 智能选型 -->
+    <div class="page active" id="page-selection">
+      <div class="main-content">
+        <div class="left-panel">
+          <div class="card">
+            <div class="card-header" data-i18n="card1">📋 核心参数配置</div>
+            
+            <div class="form-section">
+              <div class="form-section-title" data-i18n="sec1">🔖 码制 &amp; 模块尺寸</div>
+              <div class="compact-grid">
+                <div>
+                  <label data-i18n="codeType">码制类型 *</label>
+                  <select id="codeType">
+                    <option value="" data-i18n="codeTypePh">-- 请选择 --</option>
+                    <option value="QR" data-i18n="codeType2D">二维码 (2D)</option>
+                    <option value="Code39" data-i18n="codeType1D">一维码 (1D)</option>
+                  </select>
+                </div>
+                <div>
+                  <label data-i18n="moduleSize">模块尺寸 *</label>
+                  <div class="input-row">
+                    <input type="number" id="moduleSize" value="" data-i18n-ph="placeholder" placeholder="请输入">
+                    <select id="moduleUnit"><option value="mil">mil</option><option value="mm" selected>mm</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="code-img-container">
+                <img src="code-type-desc.png" data-dark-src="code-type-desc-dark.png" alt="码制类型与模块尺寸说明" data-i18n-alt="imgCaption" class="code-type-img" loading="lazy" decoding="async" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22120%22%3E%3Crect width=%22400%22 height=%22120%22 fill=%22%23fef3e8%22 rx=%2212%22/%3E%3Ctext x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%23f76504%22 font-size=%2214%22%3E📖 码制示意：QR / Code39%3C/text%3E%3C/svg%3E';">
+                <div class="img-caption" data-i18n="imgCaption">💡 码制类型与模块尺寸说明</div>
+              </div>
             </div>
+
+            <div class="form-section">
+              <div class="form-section-title" data-i18n="sec2">📐 距离 &amp; 视野参数</div>
+              <div class="compact-grid compact-grid-1">
+                <div>
+                  <label data-i18n="workDist">工作距离 *</label>
+                  <div class="input-row">
+                    <input type="number" id="workingDistance" value="" data-i18n-ph="placeholder" placeholder="请输入">
+                    <select id="distanceUnit"><option value="mm" selected>mm</option><option value="cm">cm</option></select>
+                  </div>
+                </div>
+                <div>
+                  <label data-i18n="fovW">期望视野宽度 *</label>
+                  <div class="input-row">
+                    <input type="number" id="fovWidth" value="" data-i18n-ph="placeholder" placeholder="请输入">
+                    <select id="fovUnit"><option value="mm" selected>mm</option><option value="cm">cm</option></select>
+                  </div>
+                </div>
+                <div>
+                  <label data-i18n="fovH">期望视野高度 *</label>
+                  <div class="input-row">
+                    <input type="number" id="fovHeight" value="" data-i18n-ph="placeholder" placeholder="请输入">
+                    <select id="fovHeightUnit"><option value="mm" selected>mm</option><option value="cm">cm</option></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="runBtn" data-i18n="runBtn">⚡ 开始智能选型</button>
+          </div>
         </div>
-        <div class="btn-group">
-            <button id="addBtn" class="btn btn-primary"><i class="ri-add-line"></i> 新增</button>
-            <button id="importCodeBtn" class="btn btn-outline"><i class="ri-code-box-line"></i> 导入JS</button>
-            <button id="exportBtn" class="btn btn-success"><i class="ri-download-2-line"></i> 导出</button>
-            <button id="resetBtn" class="btn btn-outline"><i class="ri-refresh-line"></i> 重置出厂</button>
+
+        <div class="right-panel">
+          <div class="card">
+            <div class="card-header" data-i18n="card2">📐 方案示意图</div>
+            <div id="calcContent">
+              <div class="schematic-wrap">
+                <svg id="schematicSvg" viewBox="0 0 580 300" xmlns="http://www.w3.org/2000/svg" style="width:100%; display:block; background:#F5F7FA; border-radius:8px;">
+                  <rect class="svg-bg" width="580" height="300" fill="#F5F7FA" rx="8"/>
+                  <rect class="svg-fov-box" x="380" y="95" width="140" height="112" fill="#FFE8D6" stroke="#f76504" stroke-width="2.2" rx="6"/>
+                  <line x1="380" y1="120" x2="410" y2="95"  stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="380" y1="150" x2="460" y2="95"  stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="380" y1="180" x2="500" y2="95"  stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="380" y1="200" x2="520" y2="110" stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="400" y1="207" x2="520" y2="150" stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="440" y1="207" x2="520" y2="190" stroke="#f76504" stroke-width="0.8" opacity="0.35"/>
+                  <line x1="380" y1="80" x2="520" y2="80" stroke="#f76504" stroke-width="1.2" marker-start="url(#arrowLeftRed)" marker-end="url(#arrowRightRed)"/>
+                  <text x="450" y="70" fill="#f76504" font-size="10" font-family="sans-serif" text-anchor="middle" data-i18n="svgEstW">预估宽度</text>
+                  <text class="svg-label-value" id="lblFovW" x="450" y="58" fill="#1A2332" font-size="11" font-family="sans-serif" font-weight="bold" text-anchor="middle">— mm</text>
+                  <line x1="366" y1="95" x2="366" y2="207" stroke="#f76504" stroke-width="1.2" marker-start="url(#arrowUpRed)" marker-end="url(#arrowDownRed)"/>
+                  <text x="325" y="156" fill="#f76504" font-size="10" font-family="sans-serif" text-anchor="middle" data-i18n="svgEstH">预估高度</text>
+                  <text class="svg-label-value" id="lblFovH" x="325" y="169" fill="#1A2332" font-size="11" font-family="sans-serif" font-weight="bold" text-anchor="middle">— mm</text>
+                  <rect x="42" y="122" width="56" height="56" fill="#1A2B4A" rx="8"/>
+                  <rect x="50" y="130" width="40" height="40" fill="#243556" rx="6"/>
+                  <circle cx="70" cy="150" r="14" fill="#0A1628" stroke="#f76504" stroke-width="2"/>
+                  <circle cx="70" cy="150" r="7" fill="#f76504" opacity="0.7"/>
+                  <circle cx="70" cy="150" r="3" fill="#ffffff"/>
+                  <circle cx="88" cy="168" r="4" fill="#f76504"/>
+                  <polygon points="70,150 380,95 380,207" fill="#f76504" opacity="0.08"/>
+                  <line x1="70" y1="150" x2="380" y2="95"  stroke="#f76504" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+                  <line x1="70" y1="150" x2="380" y2="207" stroke="#f76504" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+                  <line x1="70" y1="265" x2="380" y2="265" stroke="#4A5A6A" stroke-width="1.2" marker-start="url(#arrowLeftGray)" marker-end="url(#arrowRightGray)"/>
+                  <text x="225" y="282" fill="#4A5A6A" font-size="10" font-family="sans-serif" text-anchor="middle" data-i18n="svgWd">工作距离</text>
+                  <text class="svg-label-value" id="lblWd" x="225" y="260" fill="#1A2332" font-size="11" font-family="sans-serif" font-weight="bold" text-anchor="middle">— mm</text>
+                  <text x="155" y="148" fill="#8A9BAC" font-size="9.5" font-family="sans-serif" text-anchor="middle" data-i18n="svgFocal">焦距</text>
+                  <text class="svg-label-value" id="lblFocal" x="155" y="162" fill="#1A2332" font-size="10.5" font-family="sans-serif" font-weight="bold" text-anchor="middle">— mm</text>
+                  <defs>
+                    <marker id="arrowUpRed"    markerWidth="6" markerHeight="6" refX="3" refY="6" orient="auto"><path d="M3,0 L0,6 L6,6 Z" fill="#f76504"/></marker>
+                    <marker id="arrowDownRed"  markerWidth="6" markerHeight="6" refX="3" refY="0" orient="auto"><path d="M0,0 L6,0 L3,6 Z" fill="#f76504"/></marker>
+                    <marker id="arrowLeftRed"  markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="#f76504"/></marker>
+                    <marker id="arrowRightRed" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f76504"/></marker>
+                    <marker id="arrowLeftGray"  markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="#4A5A6A"/></marker>
+                    <marker id="arrowRightGray" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4A5A6A"/></marker>
+                  </defs>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header" data-i18n="card3">🏆 最佳推荐型号</div>
+            <div id="top1Content"><div class="empty-state" data-i18n="emptyState">等待选型结果...</div></div>
+            <button class="btn-outline" id="showModalBtn" disabled data-i18n="showModal">📋 查看所有满足条件的型号清单</button>
+          </div>
         </div>
+      </div>
     </div>
-    <div class="filter-area">
-        <div class="filter-label"><i class="ri-search-line"></i> 型号筛选</div>
-        <input type="text" id="filterModelInput" class="filter-input" placeholder="输入型号 / 系列关键字..." autocomplete="off">
-        <button id="clearFilterBtn" class="clear-filter"><i class="ri-close-circle-line"></i> 清除筛选</button>
-        <div style="font-size:0.7rem; color:#5b6e8c;"><i class="ri-information-line"></i> 支持型号、系列模糊匹配 (数据自动保存)</div>
+
+    <!-- PAGE: 竞品分析 -->
+    <div class="page" id="page-competitor">
+      <div class="cp-page">
+
+        <!-- 工具栏 -->
+        <div class="cp-toolbar">
+          <div class="cp-search-wrap">
+            <input type="text" id="cpSearchInput" class="cp-search-input" data-i18n-ph="cpSearch" placeholder="搜索友商型号 / 海康型号，如 SR-1000、ID3013PM…" autocomplete="off">
+          </div>
+          <div class="cp-filter-wrap">
+            <span class="cp-filter-label" data-i18n="cpBrandLabel">品牌筛选</span>
+            <select id="cpBrandSelect" class="cp-brand-select">
+              <option value="all" data-i18n="cpBrandAll">全部品牌</option>
+              <option value="Cognex">Cognex</option>
+              <option value="Keyence">Keyence</option>
+              <option value="Datalogic">Datalogic</option>
+              <option value="思谋">思谋</option>
+              <option value="华睿">华睿</option>
+              <option value="视界">视界</option>
+              <option value="新大陆">新大陆</option>
+            </select>
+          </div>
+          <button class="cp-btn-expand" id="cpExpandAllBtn" data-i18n="cpExpand">📂 展开所有</button>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="cp-statsbar">
+          <span id="cpStatsMsg" data-i18n="cpStats">共 0 条对标记录</span>
+          <span class="cp-statsbar-hint" data-i18n="cpStatsHint">蓝色 = 友商核心特点 · 绿色 = 海康竞争优势</span>
+        </div>
+
+        <!-- 结果区 -->
+        <div class="cp-result-area" id="cpResultArea">
+          <div class="cp-empty" data-i18n-html="cpEmpty">✨ 点击「展开所有」浏览全部对标数据，或在搜索框输入关键词自动匹配</div>
+        </div>
+
+      </div>
     </div>
-    <div class="table-wrapper">
-        <table class="product-table">
+
+    <!-- PAGE: 配单表 -->
+    <div class="page" id="page-bom">
+      <div class="bom-page-wrap">
+
+        <!-- 左侧：选型配置面板 -->
+        <div class="bom-left">
+          <div class="bom-left-header">
+            <span class="bom-left-icon">📋</span>
+            <span class="bom-left-title" data-i18n="bomConfig">配单配置</span>
+          </div>
+          <div class="bom-left-inner">
+
+            <!-- 型号选择区 -->
+            <div class="bom-group">
+              <div class="bom-group-label" data-i18n="bomModelSel">型号选择</div>
+              <div class="bom-field">
+                <div class="bom-field-label"><span class="bom-step-num">1</span> <span data-i18n="bomStep1">产品大类</span></div>
+                <select class="bom-select" id="bomCatSel">
+                  <option value="" data-i18n="bomCatPh">-- 请选择产品大类 --</option>
+                </select>
+              </div>
+              <div class="bom-field">
+                <div class="bom-field-label"><span class="bom-step-num">2</span> <span data-i18n="bomStep2">产品系列</span></div>
+                <select class="bom-select" id="bomSerSel" disabled>
+                  <option value="" data-i18n="bomSerPh">-- 请先选择大类 --</option>
+                </select>
+              </div>
+              <div class="bom-field">
+                <div class="bom-field-label"><span class="bom-step-num">3</span> <span data-i18n="bomStep3">具体型号</span></div>
+                <select class="bom-select" id="bomModelSel" disabled>
+                  <option value="" data-i18n="bomModelPh">-- 请先选择系列 --</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 选装配件 -->
+            <div class="bom-group bom-group-acc">
+              <div class="bom-group-label" data-i18n="bomAcc">选装配件</div>
+              <div class="bom-acc-list" id="bomAccList">
+                <div class="bom-acc-empty" data-i18n="bomAccEmpty">请先完成产品型号选择</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 生成按钮固定在底部 -->
+          <div class="bom-left-footer">
+            <button class="bom-add-btn" id="bomAddToListBtn" disabled data-i18n="bomAdd">⚡ 生成配单</button>
+          </div>
+        </div>
+
+        <!-- 右侧：配单明细 -->
+        <div class="bom-right">
+
+          <!-- 右侧顶部 header（与左侧配单配置对齐） -->
+          <div class="bom-right-header">
+            <span class="bom-left-icon">📊</span>
+            <span class="bom-left-title" data-i18n="bomDetail">配单明细</span>
+          </div>
+
+          <!-- 顶部工具栏 -->
+          <div class="bom-right-toolbar">
+            <div class="bom-toolbar-left">
+              <div class="bom-legend-inline">
+                <span class="bom-legend-item main" data-i18n="bomLegendMain">■ 主机</span>
+                <span class="bom-legend-item std" data-i18n="bomLegendStd">■ 标配</span>
+                <span class="bom-legend-item opt" data-i18n="bomLegendOpt">■ 选配</span>
+              </div>
+            </div>
+            <div class="bom-toolbar-actions">
+              <div class="bom-stats-row">
+                <div class="bom-stat">
+                  <div class="bom-stat-num" id="bomStatTotal">0</div>
+                  <div class="bom-stat-label" data-i18n="bomStatTotal">总计</div>
+                </div>
+                <div class="bom-stat-divider"></div>
+                <div class="bom-stat">
+                  <div class="bom-stat-num" id="bomStatMain">0</div>
+                  <div class="bom-stat-label" data-i18n="bomStatMain">主机</div>
+                </div>
+                <div class="bom-stat-divider"></div>
+                <div class="bom-stat">
+                  <div class="bom-stat-num" id="bomStatAcc">0</div>
+                  <div class="bom-stat-label" data-i18n="bomStatAcc">配件</div>
+                </div>
+              </div>
+              <div class="bom-toolbar-btns">
+                <button class="bom-btn-reset" id="bomQClearBtn" data-i18n="bomReset">重置</button>
+                <button class="bom-btn-export" id="bomQExportBtn" data-i18n="bomExport">⬇ 导出 CSV</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="bom-table-scroll">
+            <table class="bom-q-table">
+              <thead>
+                <tr>
+                  <th style="width:28px;text-align:center" data-i18n="bomThIdx">#</th>
+                  <th style="width:88px;text-align:center" data-i18n="bomThType">类型</th>
+                  <th style="min-width:120px;text-align:center" data-i18n="bomThName">物料名称</th>
+                  <th style="text-align:center" data-i18n="bomThDesc">描述</th>
+                  <th style="width:96px;text-align:center" data-i18n="bomThCode">物料代码</th>
+                  <th style="width:36px;text-align:center" data-i18n="bomThAction">操作</th>
+                </tr>
+              </thead>
+              <tbody id="bomQBody">
+                <tr><td colspan="7" class="bom-q-empty" data-i18n="bomEmpty">请选择型号，配单将自动生成</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bom-right-footer">
+            <span id="bomQCount" data-i18n="bomCount">共 0 行</span>
+            <span class="bom-footer-hint" data-i18n="bomFooterHint">💡 蓝色 = 主机 · 浅蓝 = 标配 · 浅橙 = 选配</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE: 对照表 -->
+    <div class="page" id="page-mapping">
+      <div class="mp-page-wrap">
+      <div class="mp-page">
+
+        <!-- 工具栏 -->
+        <div class="mp-toolbar">
+          <div class="mp-search-wrap">
+            <input type="text" id="mpSearchInput" class="mp-search-input"
+              data-i18n-ph="mpSearch" placeholder="搜索基线/经销 型号名称或物料代码，如 MV-ID803、IDA02X…" autocomplete="off">
+          </div>
+          <div class="mp-filter-wrap">
+            <span class="mp-filter-label" data-i18n="mpCatLabel">系列筛选</span>
+            <select id="mpCatSelect" class="mp-cat-select">
+              <option value="all" data-i18n="mpCatAll">全部系列</option>
+            </select>
+          </div>
+          <button class="mp-btn-expand" id="mpToggleAllBtn" data-i18n="mpExpand">📂 全部展开</button>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="mp-statsbar">
+          <span id="mpStats" data-i18n="mpStats">共 0 条记录</span>
+          <span class="mp-statsbar-hint" data-i18n="mpStatsHint">基线 = 直销物料 · 经销 = 渠道物料 · 每行一一对应</span>
+        </div>
+
+        <!-- 表格 -->
+        <div class="mp-table-scroll">
+          <table class="mp-table">
             <thead>
-                <tr><th>型号(Model)</th><th>系列</th><th>分辨率(W×H)</th><th>像元(μm)</th><th>焦距(mm)</th><th>接口协议</th><th>防护等级</th><th>工作距离(mm)</th><th>操作</th></tr>
+              <tr>
+                <th style="width:52px;text-align:center">#</th>
+                <th style="width:34%;text-align:center" data-i18n="mpThBaseModel">基线型号</th>
+                <th style="width:130px;text-align:center" data-i18n="mpThBaseCode">基线代码</th>
+                <th style="width:34%;text-align:center" data-i18n="mpThDistModel">经销型号</th>
+                <th style="width:130px;text-align:center" data-i18n="mpThDistCode">经销代码</th>
+              </tr>
             </thead>
-            <tbody id="tableBody"><tr><td colspan="9" style="text-align:center; padding:40px;">✨ 加载数据中...</td></tr></tbody>
-        </table>
+            <tbody id="mpTableBody">
+              <tr><td colspan="5" class="mp-empty" data-i18n="mpLoading">正在加载对照表数据…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mp-footer">
+          <span></span>
+          <span class="mp-footer-hint" data-i18n="mpFooterHint">💡 支持搜索基线和经销的型号名称及物料代码</span>
+        </div>
+
+      </div>
+      </div>
     </div>
+
+  </div>
 </div>
 
-<!-- 模态框: 新增/编辑 -->
-<div id="productModal" class="modal">
-    <div class="modal-card">
-        <div class="modal-header"><span id="modalTitle"><i class="ri-edit-box-line"></i> 产品型号</span><button class="close-icon" id="closeModalBtn">&times;</button></div>
-        <form id="productForm">
-            <div class="form-grid">
-                <label>型号 *</label><input type="text" id="model" required placeholder="例: ID803M-03M">
-                <label>系列 *</label><input type="text" id="series" required placeholder="ID800 / ID2000 / ID3000 / ID5000">
-                <label>分辨率(W×H)</label><div class="resolution-flex"><input type="number" id="resW" placeholder="宽" style="width:90px"> <span>✕</span> <input type="number" id="resH" placeholder="高" style="width:90px"></div>
-                <label>像元尺寸(μm)</label><input type="number" step="any" id="pixelSize">
-                <label>焦距(mm)</label><input type="number" step="any" id="focal">
-                <label>接口协议</label><input type="text" id="interface" placeholder="USB2.0、RS232">
-                <label>防护等级</label><input type="text" id="protection" placeholder="IP65/IP67">
-                <label>最小工作距</label><input type="number" id="minDist">
-                <label>最大工作距</label><input type="number" id="maxDist">
-            </div>
-            <div class="modal-footer"><button type="button" id="cancelModalBtn" class="btn btn-outline">取消</button><button type="submit" class="btn btn-primary"><i class="ri-save-line"></i> 保存</button></div>
-        </form>
+<!-- MODAL -->
+<div class="modal-overlay" id="modelModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 data-i18n="modalTitle">📌 满足过滤条件的推荐型号</h2>
+      <button class="modal-close" id="closeModalBtn">&times;</button>
     </div>
+    <div class="series-filter-bar">
+      <span class="filter-label" data-i18n="filterLabel">🔍 按系列筛选</span>
+      <div class="filter-check-group" id="seriesCheckGroup">
+        <label class="series-check"><input type="checkbox" value="ID800" checked> <span class="check-dot"></span> ID800</label>
+        <label class="series-check"><input type="checkbox" value="ID2000" checked> <span class="check-dot"></span> ID2000</label>
+        <label class="series-check"><input type="checkbox" value="ID3000" checked> <span class="check-dot"></span> ID3000</label>
+        <label class="series-check"><input type="checkbox" value="ID5000" checked> <span class="check-dot"></span> ID5000</label>
+      </div>
+      <button class="filter-reset-btn" id="resetSeriesFilterBtn" data-i18n="filterReset">全选</button>
+    </div>
+    <div id="modalModelList" class="modal-model-list">
+      <div class="empty-state" data-i18n="modalEmpty">请先进行选型</div>
+    </div>
+  </div>
 </div>
 
-<!-- 导入JS模态框 -->
-<div id="importModal" class="modal">
-    <div class="modal-card">
-        <div class="modal-header"><span><i class="ri-file-code-line"></i> 导入 PRODUCT_DB 代码</span><button class="close-icon" id="closeImportBtn">&times;</button></div>
-        <div style="background:#f8fafc; border-radius:20px; padding:8px 12px; font-size:0.7rem; margin-bottom:12px;"><i class="ri-information-line"></i> 支持 const PRODUCT_DB = [...] 或直接粘贴数组。导入后自动保存至本地，刷新页面不丢失。</div>
-        <textarea id="importCodeArea" rows="8" placeholder='const PRODUCT_DB = [ { model: "ID803M-03M", series: "ID800", resolution: { w: 640, h: 480 }, pixelSize: 3.7, focal: 3.1, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 120, max: 120 } } ];' style="width:100%; font-family: monospace; border-radius: 20px;"></textarea>
-        <div class="modal-footer" style="margin-top:18px;"><button id="cancelImportBtn" class="btn btn-outline">取消</button><button id="confirmImportBtn" class="btn btn-primary"><i class="ri-upload-2-line"></i> 解析并导入</button></div>
+  <!-- 选配配件 Modal -->
+  <div class="acc-modal-overlay" id="accModal">
+    <div class="acc-modal-box">
+      <div class="acc-modal-header">
+        <span class="acc-modal-title" id="accModalTitle" data-i18n="accTitle">选装配件</span>
+        <button class="acc-modal-close" id="accModalClose">✕</button>
+      </div>
+      <div class="acc-modal-body">
+        <div class="acc-modal-filter-wrap" id="accModalFilter" style="display:none"></div>
+        <div class="acc-modal-list" id="accModalList"></div>
+      </div>
+      <div class="acc-modal-footer">
+        <span class="acc-modal-hint" data-i18n="accHint">点击配件行即可勾选/取消</span>
+        <button class="acc-modal-done" id="accModalClose2" data-i18n="accDone">完成</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- 导出预览模态框 -->
-<div id="exportModal" class="modal">
-    <div class="modal-card">
-        <div class="modal-header"><span><i class="ri-download-2-line"></i> 导出 JS 代码</span><button class="close-icon" id="closeExportBtn">&times;</button></div>
-        <div class="code-preview" id="exportCodeBlock"></div>
-        <div class="modal-footer" style="margin-top:16px;"><button id="copyCodeBtn" class="btn btn-success"><i class="ri-clipboard-line"></i> 复制</button><button id="downloadCodeBtn" class="btn btn-primary"><i class="ri-file-download-line"></i> 下载 .js</button></div>
-    </div>
-</div>
-<div id="toastMsg" class="toast-msg">✔️ 提示</div>
-
-<script>
-    // ---------- 数据持久化 KEY ----------
-    const STORAGE_KEY = "industrial_camera_product_db";
-    
-    // 出厂默认示例数据（同时作为fallback）
-    const DEFAULT_SAMPLE = [
-    { model: "ID803M-03M", series: "ID800", resolution: { w: 640, h: 480 }, pixelSize: 3.7, focal: 3.1, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 120, max: 120} },
-      { model: "ID813M-05M", series: "ID800", resolution: { w: 1280, h: 1024 }, pixelSize: 2.7, focal: 4.9, interface: "USB2.0、RS232、RJ45", protection: "IP54", workingDist: { min: 70, max: 120 } },
-      { model: "ID2013EM-03M", series: "ID2000", resolution: { w: 1024, h: 1280 }, pixelSize: 2.7, focal: 2.48, interface: "Fast Ethernet、RS232", protection: "IP54", workingDist: { min: 40, max: 120 } },
-      { model: "ID2013EM-05M", series: "ID2000", resolution: { w: 1024, h: 1280 }, pixelSize: 2.7, focal: 4.63, interface: "Fast Ethernet、RS232、USB3.0", protection: "IP54", workingDist: { min: 40, max: 120 } },
-      { model: "ID2004M-06M", series: "ID2000", resolution: { w: 704, h: 540 }, pixelSize: 6.9, focal: 6.72, interface: "Fast Ethernet、RS232、USB3.0", protection: "IP65", workingDist: { min: 40, max: 120 } },
-      { model: "ID2004M-16T", series: "ID2000", resolution: { w: 704, h: 540 }, pixelSize: 6.9, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 100, max: 400 } },
-      { model: "ID2013M-06M", series: "ID2000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 6.72, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 40, max: 120 } },
-      { model: "ID2013M-16M", series: "ID2000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 105, max: 130 } },
-      { model: "ID2013M-25M", series: "ID2000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 170, max: 200 } },
-      { model: "ID2016M-06M", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 6.72, interface: "Fast Ethernet、RS232、USB3.0", protection: "IP65", workingDist: { min: 40, max: 120 } },
-      { model: "ID2016M-16M", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 105, max: 130 } },
-      { model: "ID2016M-25M", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 170, max: 200 } },
-      { model: "ID2016M-06T", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 6.7, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 70, max: 160 } },
-      { model: "ID2016M-10T", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 10, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 100, max: 400 } },
-      { model: "ID2016M-16T", series: "ID2000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP65", workingDist: { min: 100, max: 400 } },
-      { model: "ID2016XM-05M", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 5, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 25, max: 1000 } },
-      { model: "ID2016XM-08M", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 8, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 40, max: 1000 } },
-      { model: "ID2016XM-12M", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 12, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 60, max: 1000 } },
-      { model: "ID2016XM-16M", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 16, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 125, max: 1000 } },
-      { model: "ID2016XM-08L", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 8, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 40, max: 1000 } },
-      { model: "ID2016XM-12L", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 12, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 75, max: 1000 } },
-      { model: "ID2016XM-16L", series: "ID2000", resolution: { w: 1408, h: 1200 }, pixelSize: 2.2, focal: 16, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 100, max: 1000 } },
-      { model: "ID2023XM-05M", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 5, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 25, max: 1000 } },
-      { model: "ID2023XM-08M", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 8, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 40, max: 1000 } },
-      { model: "ID2023XM-12M", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 12, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 60, max: 1000 } },
-      { model: "ID2023XM-16M", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 16, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 125, max: 1000 } },
-      { model: "ID2023XM-08L", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 8, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 40, max: 1000 } },
-      { model: "ID2023XM-12L", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 12, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 75, max: 1000 } },
-      { model: "ID2023XM-16L", series: "ID2000", resolution: { w: 1920, h: 1280 }, pixelSize: 2.2, focal: 16, interface: "Fast Ethernet、RS232、USB2.0", protection: "IP65", workingDist: { min: 100, max: 1000 } },
-      { model: "ID3013PM-06M", series: "ID3000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 6, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 20, max: 2000 } },
-      { model: "ID3013PM-12M", series: "ID3000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3013PM-15M", series: "ID3000", resolution: { w: 1280, h: 1024 }, pixelSize: 4, focal: 14.8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 88, max: 2000 } },
-      { model: "ID3016PM-06M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 6, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 20, max: 2000 } },
-      { model: "ID3016PM-12M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3016PM-15M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 14.8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 88, max: 2000 } },
-      { model: "ID3050PM-08M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.4, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3050PM-12M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.4, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3050PM-16M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.4, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID3050PM-25M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.4, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3016XM-08M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3016XM-12M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3016XM-16L", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3016XM-25M", series: "ID3000", resolution: { w: 1408, h: 1024 }, pixelSize: 3.45, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3030XM-08M", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3030XM-12M", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3030XM-16M", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 110, max: 2000 } },
-      { model: "ID3030XM-25M", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3030XM-08L", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 35, max: 2000 } },
-      { model: "ID3030XM-12L", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3030XM-16L", series: "ID3000", resolution: { w: 2048, h: 1536 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 85, max: 2000 } },
-      { model: "ID3050XM-08M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3050XM-12M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3050XM-16M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 110, max: 2000 } },
-      { model: "ID3050XM-25M", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3050XM-08L", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 35, max: 2000 } },
-      { model: "ID3050XM-12L", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3050XM-16L", series: "ID3000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 85, max: 2000 } },
-      { model: "ID3040RM-08M", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3040RM-12M", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3040RM-16M", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3040RM-25M", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3040RM-00C-12", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3040RM-00C-16", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3040RM-00C-25", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3040RM-00C-35", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 35, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 200, max: 2000 } },
-      { model: "ID3040RM-00C-50", series: "ID3000", resolution: { w: 2688, h: 1536 }, pixelSize: 2, focal: 50, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 300, max: 2000 } },
-      { model: "ID3060RM-08M", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 8, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID3060RM-12M", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3060RM-16M", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID3060RM-25M", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID3060RM-00C-12", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 12, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3060RM-00C-16", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 16, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3060RM-00C-25", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 25, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID3060RM-00C-35", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 35, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 200, max: 2000 } },
-      { model: "ID3060RM-00C-50", series: "ID3000", resolution: { w: 3200, h: 1920 }, pixelSize: 2, focal: 50, interface: "Fast Ethernet、RS232", protection: "IP67", workingDist: { min: 300, max: 2000 } },
-      { model: "ID5050M-12S", series: "ID5000", resolution: { w: 2560, h: 2048 }, pixelSize: 3.2, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5050M-08S", series: "ID5000", resolution: { w: 2560, h: 2048 }, pixelSize: 3.2, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID5050M-16S", series: "ID5000", resolution: { w: 2560, h: 2048 }, pixelSize: 3.2, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050M-25S", series: "ID5000", resolution: { w: 2560, h: 2048 }, pixelSize: 3.2, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID5060M-08S", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 45, max: 2000 } },
-      { model: "ID5060M-12S", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5060M-16S", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 700 } },
-      { model: "ID5060M-25S", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 300, max: 2000 } },
-      { model: "ID5060M-00C-12", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5060M-00C-16", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID5060M-00C-25", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 125, max: 2000 } },
-      { model: "ID5060M-00C-35", series: "ID5000", resolution: { w: 3072, h: 2048 }, pixelSize: 2.4, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 175, max: 2000 } },
-      { model: "ID5120M-00C-12", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.2, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5120M-00C-16", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.2, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID5120M-00C-25", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.2, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 125, max: 2000 } },
-      { model: "ID5120M-00C-35", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.2, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 175, max: 2000 } },
-      { model: "ID5200M-00C-12", series: "ID5000", resolution: { w: 5440, h: 3648 }, pixelSize: 2.4, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5200M-00C-16", series: "ID5000", resolution: { w: 5440, h: 3648 }, pixelSize: 2.4, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID5200M-00C-25", series: "ID5000", resolution: { w: 5440, h: 3648 }, pixelSize: 2.4, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 125, max: 2000 } },
-      { model: "ID5200M-00C-35", series: "ID5000", resolution: { w: 5440, h: 3648 }, pixelSize: 2.4, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 175, max: 2000 } },
-      { model: "ID5200PM-00C-12", series: "ID5000", resolution: { w: 5120, h: 3968 }, pixelSize: 2.5, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5200PM-00C-16", series: "ID5000", resolution: { w: 5120, h: 3968 }, pixelSize: 2.5, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID5200PM-00C-25", series: "ID5000", resolution: { w: 5120, h: 3968 }, pixelSize: 2.5, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 125, max: 2000 } },
-      { model: "ID5200PM-00C-35", series: "ID5000", resolution: { w: 5120, h: 3968 }, pixelSize: 2.5, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 175, max: 2000 } },
-      { model: "ID5250PM-00C-12", series: "ID5000", resolution: { w: 5120, h: 5120 }, pixelSize: 2.5, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5250PM-00C-16", series: "ID5000", resolution: { w: 5120, h: 5120 }, pixelSize: 2.5, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 80, max: 2000 } },
-      { model: "ID5250PM-00C-25", series: "ID5000", resolution: { w: 5120, h: 5120 }, pixelSize: 2.5, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 125, max: 2000 } },
-      { model: "ID5250PM-00C-35", series: "ID5000", resolution: { w: 5120, h: 5120 }, pixelSize: 2.5, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 175, max: 2000 } },
-      { model: "ID5050XM-08M", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID5050XM-12M", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5050XM-16M", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-25M", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID5050XM-08L", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-12L", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-16L", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-00C-12", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-00C-16", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-00C-25", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5050XM-00C-35", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 200, max: 2000 } },
-      { model: "ID5050XM-00C-50", series: "ID5000", resolution: { w: 2432, h: 2048 }, pixelSize: 3.45, focal: 50, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 300, max: 2000 } },
-      { model: "ID5120XM-00C-12", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.45, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120XM-00C-16", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.45, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120XM-00C-25", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.45, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120XM-00C-35", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.45, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 200, max: 2000 } },
-      { model: "ID5120XM-00C-50", series: "ID5000", resolution: { w: 4096, h: 3072 }, pixelSize: 3.45, focal: 50, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 300, max: 2000 } },
-      { model: "ID5120RM-08M", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 25, max: 2000 } },
-      { model: "ID5120RM-12M", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 60, max: 2000 } },
-      { model: "ID5120RM-16M", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-25M", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 230, max: 2000 } },
-      { model: "ID5120RM-08L", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-12L", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-16L", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-00C-08", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 8, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-00C-12", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 12, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-00C-16", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 16, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-00C-25", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 25, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 100, max: 2000 } },
-      { model: "ID5120RM-00C-35", series: "ID5000", resolution: { w: 4096, h: 3024 }, pixelSize: 2, focal: 35, interface: "Gigabit Ethernet、RS232", protection: "IP67", workingDist: { min: 250, max: 2000 } },
-    ];
-
-    // 全局数据 & 筛选
-    let fullProductDB = [];
-    let currentFilter = "";
-
-    // ---------- 持久化操作 ----------
-    function saveToLocalStorage() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(fullProductDB));
-        } catch(e) { console.warn("存储失败", e); }
-    }
-
-    function loadFromLocalStorage() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    fullProductDB = parsed;
-                    return true;
-                } else {
-                    fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
-                    saveToLocalStorage();
-                    return false;
-                }
-            } catch(e) {
-                fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
-                saveToLocalStorage();
-                return false;
-            }
-        } else {
-            fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
-            saveToLocalStorage();
-            return false;
-        }
-        return true;
-    }
-
-    // 统一变更函数：任何对 fullProductDB 的修改后调用此方法，持久化+刷新视图
-    function commitDataChange() {
-        saveToLocalStorage();
-        renderTable();
-    }
-
-    // 渲染表格（居中对齐）
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        const statsSpan = document.getElementById('statsCount');
-        let filteredData = [...fullProductDB];
-        if (currentFilter.trim() !== "") {
-            const kw = currentFilter.trim().toLowerCase();
-            filteredData = fullProductDB.filter(item => 
-                item.model.toLowerCase().includes(kw) || 
-                item.series.toLowerCase().includes(kw)
-            );
-        }
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:50px;"><i class="ri-inbox-line" style="font-size:2rem;"></i><br/>没有匹配的型号</td></tr>`;
-            statsSpan.innerText = fullProductDB.length;
-            return;
-        }
-        let html = '';
-        filteredData.forEach((item) => {
-            const res = item.resolution || { w: 0, h: 0 };
-            const wd = item.workingDist || { min: 0, max: 0 };
-            html += `<tr>
-                <td><span class="model-code">${escapeHtml(item.model)}</span></td>
-                <td>${escapeHtml(item.series)}</td>
-                <td>${res.w} × ${res.h}</td>
-                <td>${item.pixelSize ?? '-'}</td>
-                <td>${item.focal ?? '-'}</td>
-                <td>${escapeHtml(item.interface || '-')}</td>
-                <td>${escapeHtml(item.protection || '-')}</td>
-                <td>${wd.min} ~ ${wd.max}</td>
-                <td class="action-cell">
-                    <button class="action-btn edit-btn" data-model="${escapeHtml(item.model)}"><i class="ri-pencil-line"></i><span>编辑</span></button>
-                    <button class="action-btn del-btn" data-model="${escapeHtml(item.model)}"><i class="ri-delete-bin-line"></i><span>删除</span></button>
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-        statsSpan.innerText = fullProductDB.length;
-
-        // 绑定编辑删除
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const model = btn.getAttribute('data-model');
-                const target = fullProductDB.find(p => p.model === model);
-                if(target) openEditModal(target);
-            });
-        });
-        document.querySelectorAll('.del-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const model = btn.getAttribute('data-model');
-                if(confirm(`确认删除 "${model}" 吗？`)) {
-                    const idx = fullProductDB.findIndex(p => p.model === model);
-                    if(idx !== -1) fullProductDB.splice(idx, 1);
-                    commitDataChange();  // 持久化并刷新
-                    showToast(`已删除 ${model}`);
-                }
-            });
-        });
-    }
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':(m==='<'?'&lt;':'&gt;')); }
-    
-    let editTargetModel = null;
-    function openAddModal() { editTargetModel = null; document.getElementById('modalTitle').innerHTML = '<i class="ri-add-circle-line"></i> 新增型号'; document.getElementById('productForm').reset(); document.getElementById('productModal').style.display = 'flex'; }
-    function openEditModal(item) {
-        editTargetModel = item.model;
-        document.getElementById('modalTitle').innerHTML = '<i class="ri-edit-box-line"></i> 编辑型号';
-        document.getElementById('model').value = item.model;
-        document.getElementById('series').value = item.series;
-        document.getElementById('resW').value = item.resolution?.w || 0;
-        document.getElementById('resH').value = item.resolution?.h || 0;
-        document.getElementById('pixelSize').value = item.pixelSize;
-        document.getElementById('focal').value = item.focal;
-        document.getElementById('interface').value = item.interface;
-        document.getElementById('protection').value = item.protection;
-        document.getElementById('minDist').value = item.workingDist?.min || 0;
-        document.getElementById('maxDist').value = item.workingDist?.max || 0;
-        document.getElementById('productModal').style.display = 'flex';
-    }
-    function closeModal() { document.getElementById('productModal').style.display = 'none'; editTargetModel = null; }
-    
-    function saveProductFromForm() {
-        const model = document.getElementById('model').value.trim();
-        if(!model) { showToast('型号不能为空'); return false; }
-        const newProd = {
-            model: model,
-            series: document.getElementById('series').value.trim(),
-            resolution: { w: parseInt(document.getElementById('resW').value) || 0, h: parseInt(document.getElementById('resH').value) || 0 },
-            pixelSize: parseFloat(document.getElementById('pixelSize').value) || 0,
-            focal: parseFloat(document.getElementById('focal').value) || 0,
-            interface: document.getElementById('interface').value.trim(),
-            protection: document.getElementById('protection').value.trim(),
-            workingDist: { min: parseInt(document.getElementById('minDist').value) || 0, max: parseInt(document.getElementById('maxDist').value) || 0 }
-        };
-        if(editTargetModel !== null) {
-            const idx = fullProductDB.findIndex(p => p.model === editTargetModel);
-            if(idx !== -1) fullProductDB[idx] = newProd;
-            showToast('修改成功');
-        } else {
-            if(fullProductDB.some(p => p.model === model)) { showToast(`型号 ${model} 已存在`); return false; }
-            fullProductDB.push(newProd);
-            showToast('添加成功');
-        }
-        commitDataChange(); // 持久化+刷新
-        closeModal();
-        return true;
-    }
-
-    // 导入解析 + 持久化
-    function importFromCode(jsCode) {
-        try {
-            let match = jsCode.match(/PRODUCT_DB\s*=\s*(\[[\s\S]*?\]);/);
-            if(!match) match = jsCode.match(/(\[\s*\{[\s\S]*?\}\s*\])/);
-            if(!match) throw new Error('未找到数组定义');
-            let arrayStr = match[1] || match[0];
-            arrayStr = arrayStr.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
-            const parsed = new Function('return ' + arrayStr)();
-            if(!Array.isArray(parsed)) throw new Error('无效数组');
-            const validated = parsed.filter(v => v && typeof v === 'object').map(v => ({
-                model: v.model || 'unknown',
-                series: v.series || '',
-                resolution: v.resolution && typeof v.resolution === 'object' ? { w: v.resolution.w||0, h: v.resolution.h||0 } : { w:0, h:0 },
-                pixelSize: v.pixelSize ?? 0,
-                focal: v.focal ?? 0,
-                interface: v.interface || '',
-                protection: v.protection || '',
-                workingDist: v.workingDist && typeof v.workingDist === 'object' ? { min: v.workingDist.min||0, max: v.workingDist.max||0 } : { min:0, max:0 }
-            }));
-            if(validated.length === 0) throw new Error('无有效数据');
-            fullProductDB = validated;
-            commitDataChange();  // 关键: 保存至localStorage并刷新表格
-            showToast(`导入成功，共 ${fullProductDB.length} 个型号 (数据已自动保存)`);
-            document.getElementById('importModal').style.display = 'none';
-            document.getElementById('importCodeArea').value = '';
-        } catch(e) { showToast(`导入失败: ${e.message}`); }
-    }
-
-    function exportToJS() { const code = `const PRODUCT_DB = ${JSON.stringify(fullProductDB, null, 2)};`; document.getElementById('exportCodeBlock').innerText = code; document.getElementById('exportModal').style.display = 'flex'; }
-    function copyExported() { navigator.clipboard.writeText(document.getElementById('exportCodeBlock').innerText).then(()=>showToast('已复制')).catch(()=>showToast('复制失败')); }
-    function downloadJS() { const blob = new Blob([`// 工业相机数据库 (持久化数据)\nconst PRODUCT_DB = ${JSON.stringify(fullProductDB, null, 2)};\nexport default PRODUCT_DB;`], {type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`product_db_${Date.now()}.js`; a.click(); URL.revokeObjectURL(a.href); showToast('下载成功'); }
-    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.opacity='1'; setTimeout(()=>t.style.opacity='0', 2000); }
-    
-    // 重置出厂数据 (同时覆盖存储)
-    function resetToFactory() {
-        fullProductDB = JSON.parse(JSON.stringify(DEFAULT_SAMPLE));
-        commitDataChange();
-        currentFilter = "";
-        document.getElementById('filterModelInput').value = "";
-        showToast(`已重置为出厂示例数据 (${fullProductDB.length} 个型号)`);
-    }
-    
-    function applyFilter() { currentFilter = document.getElementById('filterModelInput').value; renderTable(); }
-    function clearFilter() { document.getElementById('filterModelInput').value = ""; currentFilter = ""; renderTable(); showToast("已清除筛选"); }
-
-    // 事件绑定
-    document.getElementById('addBtn').addEventListener('click', openAddModal);
-    document.getElementById('importCodeBtn').addEventListener('click', ()=>document.getElementById('importModal').style.display='flex');
-    document.getElementById('exportBtn').addEventListener('click', exportToJS);
-    document.getElementById('resetBtn').addEventListener('click', resetToFactory);
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('closeImportBtn').addEventListener('click', ()=>document.getElementById('importModal').style.display='none');
-    document.getElementById('cancelImportBtn').addEventListener('click', ()=>document.getElementById('importModal').style.display='none');
-    document.getElementById('confirmImportBtn').addEventListener('click', ()=>{ const code = document.getElementById('importCodeArea').value; if(code.trim()) importFromCode(code); else showToast('请输入代码'); });
-    document.getElementById('closeExportBtn').addEventListener('click', ()=>document.getElementById('exportModal').style.display='none');
-    document.getElementById('copyCodeBtn').addEventListener('click', copyExported);
-    document.getElementById('downloadCodeBtn').addEventListener('click', downloadJS);
-    document.getElementById('clearFilterBtn').addEventListener('click', clearFilter);
-    document.getElementById('filterModelInput').addEventListener('input', applyFilter);
-    document.getElementById('productForm').addEventListener('submit', (e)=>{ e.preventDefault(); saveProductFromForm(); });
-    window.addEventListener('click', (e)=>{ if(e.target.classList.contains('modal')) e.target.style.display='none'; });
-    
-    // 启动时加载本地存储数据
-    loadFromLocalStorage();
-    renderTable();
-</script>
+  <!-- ===== 脚本加载（数据优先，模块在后） ===== -->
+  <script src="js/data/product_db.js"></script>
+  <script src="js/data/competitor.js"></script>
+  <script src="js/data/mapping.js"></script>
+  <script src="js/app.js?v=4"></script>
+  <script src="js/bom.js"></script>
+  <script src="js/data/peidan.js"></script>
+  <script src="js/mapping_module.js"></script>
 </body>
 </html>
